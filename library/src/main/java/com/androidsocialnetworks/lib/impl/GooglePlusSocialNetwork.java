@@ -2,9 +2,11 @@ package com.androidsocialnetworks.lib.impl;
 
 import android.app.Activity;
 import android.content.Intent;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Handler;
 import android.support.v4.app.Fragment;
+import android.text.TextUtils;
 import android.util.Log;
 
 import com.androidsocialnetworks.lib.MomentUtil;
@@ -14,15 +16,20 @@ import com.androidsocialnetworks.lib.SocialPerson;
 import com.androidsocialnetworks.lib.listener.OnCheckIsFriendCompleteListener;
 import com.androidsocialnetworks.lib.listener.OnLoginCompleteListener;
 import com.androidsocialnetworks.lib.listener.OnPostingCompleteListener;
+import com.androidsocialnetworks.lib.listener.OnRequestAccessTokenCompleteListener;
 import com.androidsocialnetworks.lib.listener.OnRequestAddFriendCompleteListener;
 import com.androidsocialnetworks.lib.listener.OnRequestRemoveFriendCompleteListener;
 import com.androidsocialnetworks.lib.listener.OnRequestSocialPersonCompleteListener;
+import com.google.android.gms.auth.GoogleAuthException;
+import com.google.android.gms.auth.GoogleAuthUtil;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GooglePlayServicesClient;
 import com.google.android.gms.plus.PlusClient;
 import com.google.android.gms.plus.model.people.Person;
 
 import java.io.File;
+import java.io.IOException;
+import java.util.Arrays;
 import java.util.UUID;
 
 public class GooglePlusSocialNetwork extends SocialNetwork
@@ -36,13 +43,15 @@ public class GooglePlusSocialNetwork extends SocialNetwork
 
     private PlusClient mPlusClient;
     private ConnectionResult mConnectionResult;
+    private String[] scopes;
 
     private boolean mConnectRequested;
 
     private Handler mHandler = new Handler();
 
-    public GooglePlusSocialNetwork(Fragment fragment) {
+    public GooglePlusSocialNetwork(Fragment fragment, String[] scopes) {
         super(fragment);
+        this.scopes = scopes;
     }
 
     @Override
@@ -52,8 +61,12 @@ public class GooglePlusSocialNetwork extends SocialNetwork
 
     @Override
     public void requestLogin(OnLoginCompleteListener onLoginCompleteListener) {
-        super.requestLogin(onLoginCompleteListener);
+        if(isConnected()) {
+            onLoginCompleteListener.onLoginSuccess(getID());
+            return;
+        }
 
+        super.requestLogin(onLoginCompleteListener);
         mConnectRequested = true;
 
         try {
@@ -80,6 +93,43 @@ public class GooglePlusSocialNetwork extends SocialNetwork
     @Override
     public int getID() {
         return ID;
+    }
+
+    @Override
+    public void requestAccessToken(OnRequestAccessTokenCompleteListener onRequestAccessTokenCompleteListener) {
+        super.requestAccessToken(onRequestAccessTokenCompleteListener);
+
+        AsyncTask<Void, Void, String> task = new AsyncTask<Void, Void, String>() {
+
+            @Override
+            protected String doInBackground(Void... params) {
+                String accessToken = null;
+                try {
+                    accessToken = GoogleAuthUtil.getToken(mSocialNetworkManager.getActivity(), mPlusClient.getAccountName(),
+                            "oauth2:" + TextUtils.join(" ", Arrays.asList(scopes)));
+                } catch (IOException e) {
+                    Log.e(TAG, "ERROR", e);
+                } catch (GoogleAuthException e) {
+                    Log.e(TAG, "ERROR", e);
+                }
+
+                return accessToken;
+            }
+
+            @Override
+            protected void onPostExecute(final String accessToken) {
+                if(accessToken != null) {
+                    mHandler.post(new Runnable() {
+                        @Override
+                        public void run() {
+                            ((OnRequestAccessTokenCompleteListener) mLocalListeners.get(REQUEST_GET_ACCESS_TOKEN))
+                                    .onRequestAccessTokenSuccess(getID(), accessToken);
+                        }
+                    });
+                }
+            }
+        };
+        task.execute();
     }
 
     @Override
@@ -161,7 +211,8 @@ public class GooglePlusSocialNetwork extends SocialNetwork
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         mPlusClient = new PlusClient.Builder(mSocialNetworkManager.getActivity(), this, this)
-                .setActions(MomentUtil.ACTIONS).build();
+                .setActions(MomentUtil.ACTIONS)
+                .build();
     }
 
     @Override
@@ -186,8 +237,7 @@ public class GooglePlusSocialNetwork extends SocialNetwork
                 mPlusClient.connect();
             } else if (resultCode == Activity.RESULT_CANCELED) {
                 if (mLocalListeners.get(REQUEST_LOGIN) != null) {
-                    mLocalListeners.get(REQUEST_LOGIN).onError(getID(), REQUEST_LOGIN,
-                            "canceled", null);
+                    mLocalListeners.get(REQUEST_LOGIN).onError(getID(), REQUEST_LOGIN, "canceled", null);
                 }
             }
         }
@@ -205,8 +255,7 @@ public class GooglePlusSocialNetwork extends SocialNetwork
             }
 
             if (mLocalListeners.get(REQUEST_LOGIN) != null) {
-                mLocalListeners.get(REQUEST_LOGIN).onError(getID(), REQUEST_LOGIN,
-                        "get person == null", null);
+                mLocalListeners.get(REQUEST_LOGIN).onError(getID(), REQUEST_LOGIN, "get person == null", null);
             }
         }
 
@@ -221,10 +270,8 @@ public class GooglePlusSocialNetwork extends SocialNetwork
     @Override
     public void onConnectionFailed(ConnectionResult connectionResult) {
         mConnectionResult = connectionResult;
-
         if (mConnectRequested && mLocalListeners.get(REQUEST_LOGIN) != null) {
-            mLocalListeners.get(REQUEST_LOGIN).onError(getID(), REQUEST_LOGIN,
-                    "error: " + connectionResult.getErrorCode(), null);
+            mLocalListeners.get(REQUEST_LOGIN).onError(getID(), REQUEST_LOGIN, "error: " + connectionResult.getErrorCode(), null);
         }
 
         mConnectRequested = false;

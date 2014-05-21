@@ -11,7 +11,7 @@ android {
     }
 
     compileSdkVersion 19
-    buildToolsVersion "19.0.3"
+    buildToolsVersion "19.1.0"
 
     defaultConfig {
         minSdkVersion 9
@@ -67,10 +67,10 @@ uploadArchives {
     repositories.mavenDeployer {
         beforeDeployment { MavenDeployment deployment -> signing.signPom(deployment) }
 
-        repository(url: sonatypeRepo) {
-            authentication(userName: sonatypeUsername,
-                    password: sonatypePassword)
-        }
+//        repository(url: sonatypeRepo) {
+//            authentication(userName: sonatypeUsername,
+//                    password: sonatypePassword)
+//        }
 
         pom.project {
             name 'Android Social Networks Library'

@@ -14,6 +14,7 @@ import com.androidsocialnetworks.lib.impl.TwitterSocialNetwork;
 import com.facebook.internal.Utility;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -29,6 +30,7 @@ public class SocialNetworkManager extends Fragment {
     private static final String PARAM_LINKEDIN_PERMISSIONS = "SocialNetworkManager.PARAM_LINKEDIN_PERMISSIONS";
     private static final String PARAM_FACEBOOK = "SocialNetworkManager.PARAM_FACEBOOK";
     private static final String PARAM_GOOGLE_PLUS = "SocialNetworkManager.PARAM_GOOGLE_PLUS";
+    private static final String PARAM_GOOGLE_PLUS_PERMISSIONS = "SocialNetworkManager.PARAM_GOOGLE_PLUS_PERMISSIONS";
 
     private Map<Integer, SocialNetwork> mSocialNetworksMap = new HashMap<Integer, SocialNetwork>();
     private OnInitializationCompleteListener mOnInitializationCompleteListener;
@@ -50,7 +52,11 @@ public class SocialNetworkManager extends Fragment {
         final String paramLinkedInPermissions = args.getString(PARAM_LINKEDIN_PERMISSIONS);
 
         final boolean paramFacebook = args.getBoolean(PARAM_FACEBOOK, false);
+
         final boolean paramGooglePlus = args.getBoolean(PARAM_GOOGLE_PLUS, false);
+
+        String scopes = args.getString(PARAM_GOOGLE_PLUS_PERMISSIONS);
+        final String[] paramGooglePlusPermissions = TextUtils.split(" ", scopes == null ? "" : scopes);
 
         if (!TextUtils.isEmpty(paramTwitterKey) || !TextUtils.isEmpty(paramTwitterKey)) {
             mSocialNetworksMap.put(TwitterSocialNetwork.ID,
@@ -67,7 +73,7 @@ public class SocialNetworkManager extends Fragment {
         }
 
         if (paramGooglePlus) {
-            mSocialNetworksMap.put(GooglePlusSocialNetwork.ID, new GooglePlusSocialNetwork(this));
+            mSocialNetworksMap.put(GooglePlusSocialNetwork.ID, new GooglePlusSocialNetwork(this, paramGooglePlusPermissions));
         }
 
         for (SocialNetwork socialNetwork : mSocialNetworksMap.values()) {
@@ -215,6 +221,7 @@ public class SocialNetworkManager extends Fragment {
         private String linkedInConsumerKey, linkedInConsumerSecret, linkedInPermissions;
         private boolean facebook;
         private boolean googlePlus;
+        private String[] googlePlusPermissions;
 
         private Context mContext;
 
@@ -253,7 +260,8 @@ public class SocialNetworkManager extends Fragment {
             return this;
         }
 
-        public Builder googlePlus() {
+        public Builder googlePlus(String[] permissions) {
+            googlePlusPermissions = permissions;
             googlePlus = true;
             return this;
         }
@@ -279,6 +287,7 @@ public class SocialNetworkManager extends Fragment {
 
             if (googlePlus) {
                 args.putBoolean(PARAM_GOOGLE_PLUS, true);
+                args.putString(PARAM_GOOGLE_PLUS_PERMISSIONS, TextUtils.join(" ", Arrays.asList(googlePlusPermissions)));
             }
 
             SocialNetworkManager socialNetworkManager = new SocialNetworkManager();

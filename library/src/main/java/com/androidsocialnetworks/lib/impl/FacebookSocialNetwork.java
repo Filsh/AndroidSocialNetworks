@@ -14,6 +14,7 @@ import com.androidsocialnetworks.lib.SocialPerson;
 import com.androidsocialnetworks.lib.listener.OnCheckIsFriendCompleteListener;
 import com.androidsocialnetworks.lib.listener.OnLoginCompleteListener;
 import com.androidsocialnetworks.lib.listener.OnPostingCompleteListener;
+import com.androidsocialnetworks.lib.listener.OnRequestAccessTokenCompleteListener;
 import com.androidsocialnetworks.lib.listener.OnRequestAddFriendCompleteListener;
 import com.androidsocialnetworks.lib.listener.OnRequestRemoveFriendCompleteListener;
 import com.androidsocialnetworks.lib.listener.OnRequestSocialPersonCompleteListener;
@@ -112,6 +113,11 @@ public class FacebookSocialNetwork extends SocialNetwork {
     @Override
     public int getID() {
         return ID;
+    }
+
+    @Override
+    public void requestAccessToken(OnRequestAccessTokenCompleteListener onRequestAccessTokenCompleteListener) {
+        throw new SocialNetworkException("requestAccessToken isn't allowed for FacebookSocialNetwork");
     }
 
     @Override
