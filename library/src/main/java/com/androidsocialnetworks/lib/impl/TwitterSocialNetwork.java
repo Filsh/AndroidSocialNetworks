@@ -36,6 +36,8 @@ import static com.androidsocialnetworks.lib.Consts.TAG;
 
 public class TwitterSocialNetwork extends OAuthSocialNetwork {
     public static final int ID = 1;
+    public static final String NAME = "twitter";
+
     private static final String SAVE_STATE_KEY_OAUTH_TOKEN = "TwitterSocialNetwork.SAVE_STATE_KEY_OAUTH_TOKEN";
     private static final String SAVE_STATE_KEY_OAUTH_SECRET = "TwitterSocialNetwork.SAVE_STATE_KEY_OAUTH_SECRET";
     private static final String SAVE_STATE_KEY_USER_ID = "TwitterSocialNetwork.SAVE_STATE_KEY_USER_ID";
@@ -93,6 +95,11 @@ public class TwitterSocialNetwork extends OAuthSocialNetwork {
     @Override
     public int getID() {
         return ID;
+    }
+
+    @Override
+    public String getName() {
+        return NAME;
     }
 
     @Override

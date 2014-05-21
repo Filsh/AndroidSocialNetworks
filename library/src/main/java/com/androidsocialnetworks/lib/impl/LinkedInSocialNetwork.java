@@ -42,6 +42,7 @@ import java.util.UUID;
 
 public class LinkedInSocialNetwork extends OAuthSocialNetwork {
     public static final int ID = 2;
+    public static final String NAME = "linkedin";
 
     public static final String OAUTH_CALLBACK_SCHEME = "x-oauthflow-linkedin";
     public static final String OAUTH_CALLBACK_HOST = "linkedinApiTestCallback";
@@ -99,6 +100,11 @@ public class LinkedInSocialNetwork extends OAuthSocialNetwork {
     @Override
     public int getID() {
         return ID;
+    }
+
+    @Override
+    public String getName() {
+        return NAME;
     }
 
     @Override

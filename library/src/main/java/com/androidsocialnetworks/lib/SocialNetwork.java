@@ -116,6 +116,8 @@ public abstract class SocialNetwork {
 
     public abstract int getID();
 
+    public abstract String getName();
+
     public void requestAccessToken(OnRequestAccessTokenCompleteListener onRequestAccessTokenCompleteListener) {
         registerListener(REQUEST_GET_ACCESS_TOKEN, onRequestAccessTokenCompleteListener);
     }

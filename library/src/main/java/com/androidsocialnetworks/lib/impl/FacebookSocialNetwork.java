@@ -4,8 +4,10 @@ import android.content.Context;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
+import android.text.TextUtils;
 import android.util.Log;
 
 import com.androidsocialnetworks.lib.SocialNetwork;
@@ -30,15 +32,21 @@ import com.facebook.UiLifecycleHelper;
 import com.facebook.internal.SessionTracker;
 import com.facebook.internal.Utility;
 import com.facebook.model.GraphUser;
+import com.google.android.gms.auth.GoogleAuthException;
+import com.google.android.gms.auth.GoogleAuthUtil;
 
 import java.io.File;
+import java.io.IOException;
+import java.util.Arrays;
 import java.util.Collections;
 
 /**
  * TODO: think about canceling requests
  */
 public class FacebookSocialNetwork extends SocialNetwork {
+
     public static final int ID = 4;
+    public static final String NAME = "facebook";
 
     private static final String TAG = FacebookSocialNetwork.class.getSimpleName();
     private static final String PERMISSION = "publish_actions";
@@ -56,8 +64,9 @@ public class FacebookSocialNetwork extends SocialNetwork {
         }
     };
 
-    public FacebookSocialNetwork(Fragment fragment) {
+    public FacebookSocialNetwork(Fragment fragment, String applicationId) {
         super(fragment);
+        mApplicationId = applicationId;
     }
 
     @Override
@@ -68,6 +77,11 @@ public class FacebookSocialNetwork extends SocialNetwork {
 
     @Override
     public void requestLogin(OnLoginCompleteListener onLoginCompleteListener) {
+        if(isConnected()) {
+            onLoginCompleteListener.onLoginSuccess(getID());
+            return;
+        }
+
         super.requestLogin(onLoginCompleteListener);
 
         final Session openSession = mSessionTracker.getOpenSession();
@@ -97,6 +111,8 @@ public class FacebookSocialNetwork extends SocialNetwork {
 
             currentSession.openForRead(openRequest);
         }
+
+        currentSession.getAccessToken();
     }
 
     @Override
@@ -116,8 +132,28 @@ public class FacebookSocialNetwork extends SocialNetwork {
     }
 
     @Override
+    public String getName() {
+        return NAME;
+    }
+
+    @Override
     public void requestAccessToken(OnRequestAccessTokenCompleteListener onRequestAccessTokenCompleteListener) {
-        throw new SocialNetworkException("requestAccessToken isn't allowed for FacebookSocialNetwork");
+        super.requestAccessToken(onRequestAccessTokenCompleteListener);
+
+        Session currentSession = mSessionTracker.getSession();
+        if(currentSession == null || !currentSession.isOpened()) {
+            mLocalListeners.get(REQUEST_GET_ACCESS_TOKEN).onError(getID(),
+                    REQUEST_GET_ACCESS_TOKEN, "please login first", null);
+        } else {
+            String accessToken = currentSession.getAccessToken();
+            OnRequestAccessTokenCompleteListener listener = ((OnRequestAccessTokenCompleteListener) mLocalListeners.get(REQUEST_GET_ACCESS_TOKEN));
+
+            if (accessToken == null) {
+                listener.onError(getID(), REQUEST_GET_ACCESS_TOKEN, "access token is null", null);
+            } else {
+                listener.onRequestAccessTokenSuccess(getID(), accessToken);
+            }
+        }
     }
 
     @Override

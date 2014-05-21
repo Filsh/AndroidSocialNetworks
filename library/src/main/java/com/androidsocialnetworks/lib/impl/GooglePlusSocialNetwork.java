@@ -36,6 +36,7 @@ public class GooglePlusSocialNetwork extends SocialNetwork
         implements GooglePlayServicesClient.ConnectionCallbacks, GooglePlayServicesClient.OnConnectionFailedListener {
 
     public static final int ID = 3;
+    public static final String NAME = "google";
 
     private static final String TAG = GooglePlusSocialNetwork.class.getSimpleName();
     // max 16 bit to use in startActivityForResult
@@ -96,40 +97,52 @@ public class GooglePlusSocialNetwork extends SocialNetwork
     }
 
     @Override
+    public String getName() {
+        return NAME;
+    };
+
+    @Override
     public void requestAccessToken(OnRequestAccessTokenCompleteListener onRequestAccessTokenCompleteListener) {
         super.requestAccessToken(onRequestAccessTokenCompleteListener);
 
-        AsyncTask<Void, Void, String> task = new AsyncTask<Void, Void, String>() {
+        if(!isConnected()) {
+            mLocalListeners.get(REQUEST_GET_ACCESS_TOKEN).onError(getID(),
+                    REQUEST_GET_ACCESS_TOKEN, "please login first", null);
+        } else {
+            AsyncTask<Void, Void, String> task = new AsyncTask<Void, Void, String>() {
 
-            @Override
-            protected String doInBackground(Void... params) {
-                String accessToken = null;
-                try {
-                    accessToken = GoogleAuthUtil.getToken(mSocialNetworkManager.getActivity(), mPlusClient.getAccountName(),
-                            "oauth2:" + TextUtils.join(" ", Arrays.asList(scopes)));
-                } catch (IOException e) {
-                    Log.e(TAG, "ERROR", e);
-                } catch (GoogleAuthException e) {
-                    Log.e(TAG, "ERROR", e);
+                @Override
+                protected String doInBackground(Void... params) {
+                    String accessToken = null;
+                    try {
+                        accessToken = GoogleAuthUtil.getToken(mSocialNetworkManager.getActivity(), mPlusClient.getAccountName(),
+                                "oauth2:" + TextUtils.join(" ", Arrays.asList(scopes)));
+                    } catch (IOException e) {
+                        Log.e(TAG, "ERROR", e);
+                    } catch (GoogleAuthException e) {
+                        Log.e(TAG, "ERROR", e);
+                    }
+
+                    return accessToken;
                 }
 
-                return accessToken;
-            }
-
-            @Override
-            protected void onPostExecute(final String accessToken) {
-                if(accessToken != null) {
+                @Override
+                protected void onPostExecute(final String accessToken) {
                     mHandler.post(new Runnable() {
                         @Override
                         public void run() {
-                            ((OnRequestAccessTokenCompleteListener) mLocalListeners.get(REQUEST_GET_ACCESS_TOKEN))
-                                    .onRequestAccessTokenSuccess(getID(), accessToken);
+                            OnRequestAccessTokenCompleteListener listener = ((OnRequestAccessTokenCompleteListener) mLocalListeners.get(REQUEST_GET_ACCESS_TOKEN));
+                            if (accessToken == null) {
+                                listener.onError(getID(), REQUEST_GET_ACCESS_TOKEN, "access token is null", null);
+                            } else {
+                                listener.onRequestAccessTokenSuccess(getID(), accessToken);
+                            }
                         }
                     });
                 }
-            }
-        };
-        task.execute();
+            };
+            task.execute();
+        }
     }
 
     @Override
