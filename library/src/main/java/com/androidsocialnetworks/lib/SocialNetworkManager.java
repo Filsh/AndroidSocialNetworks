@@ -58,7 +58,7 @@ public class SocialNetworkManager extends Fragment {
         final boolean paramGooglePlus = args.getBoolean(PARAM_GOOGLE_PLUS, false);
 
         String scopes = args.getString(PARAM_GOOGLE_PLUS_PERMISSIONS);
-        final String[] paramGooglePlusPermissions = TextUtils.split(" ", scopes == null ? "" : scopes);
+        final String[] paramGooglePlusPermissions = scopes.split(" ");
 
         if (!TextUtils.isEmpty(paramTwitterKey) || !TextUtils.isEmpty(paramTwitterKey)) {
             mSocialNetworksMap.put(TwitterSocialNetwork.ID,

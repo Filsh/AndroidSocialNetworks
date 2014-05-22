@@ -9,7 +9,6 @@ import android.support.v4.app.Fragment;
 import android.text.TextUtils;
 import android.util.Log;
 
-import com.androidsocialnetworks.lib.MomentUtil;
 import com.androidsocialnetworks.lib.SocialNetwork;
 import com.androidsocialnetworks.lib.SocialNetworkException;
 import com.androidsocialnetworks.lib.SocialPerson;
@@ -22,6 +21,7 @@ import com.androidsocialnetworks.lib.listener.OnRequestRemoveFriendCompleteListe
 import com.androidsocialnetworks.lib.listener.OnRequestSocialPersonCompleteListener;
 import com.google.android.gms.auth.GoogleAuthException;
 import com.google.android.gms.auth.GoogleAuthUtil;
+import com.google.android.gms.auth.UserRecoverableAuthException;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GooglePlayServicesClient;
 import com.google.android.gms.plus.PlusClient;
@@ -117,8 +117,12 @@ public class GooglePlusSocialNetwork extends SocialNetwork
                     try {
                         accessToken = GoogleAuthUtil.getToken(mSocialNetworkManager.getActivity(), mPlusClient.getAccountName(),
                                 "oauth2:" + TextUtils.join(" ", Arrays.asList(scopes)));
+
+                        Log.i("accessToken", String.valueOf(accessToken));
                     } catch (IOException e) {
                         Log.e(TAG, "ERROR", e);
+                    } catch (UserRecoverableAuthException e) {
+                        mSocialNetworkManager.getActivity().startActivityForResult(e.getIntent(), REQUEST_AUTH);
                     } catch (GoogleAuthException e) {
                         Log.e(TAG, "ERROR", e);
                     }
@@ -224,7 +228,7 @@ public class GooglePlusSocialNetwork extends SocialNetwork
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         mPlusClient = new PlusClient.Builder(mSocialNetworkManager.getActivity(), this, this)
-                .setActions(MomentUtil.ACTIONS)
+                .setScopes(scopes)
                 .build();
     }
 
