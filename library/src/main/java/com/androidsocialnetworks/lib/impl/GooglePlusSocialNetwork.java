@@ -306,6 +306,7 @@ public class GooglePlusSocialNetwork extends SocialNetwork
 
             if(errorCode == ConnectionResult.SIGN_IN_REQUIRED || errorCode == ConnectionResult.RESOLUTION_REQUIRED) {
                 Log.i("onConnectionFailed", "Error code: " + errorCode);
+                Log.i("onConnectionFailed", "Status error codes see: http://developer.android.com/reference/com/google/android/gms/common/ConnectionResult.html");
                 try {
                     mConnectionResult.startResolutionForResult(mSocialNetworkManager.getActivity(), REQUEST_AUTH);
                     return;
