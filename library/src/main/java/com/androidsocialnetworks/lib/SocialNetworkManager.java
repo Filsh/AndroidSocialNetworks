@@ -30,6 +30,7 @@ public class SocialNetworkManager extends Fragment {
     private static final String PARAM_LINKEDIN_PERMISSIONS = "SocialNetworkManager.PARAM_LINKEDIN_PERMISSIONS";
     private static final String PARAM_FACEBOOK = "SocialNetworkManager.PARAM_FACEBOOK";
     private static final String PARAM_FACEBOOK_APPLICATION_ID = "SocialNetworkManager.PARAM_FACEBOOK_APPLICATION_ID";
+    private static final String PARAM_FACEBOOK_PERMISSIONS = "SocialNetworkManager.PARAM_FACEBOOK_PERMISSIONS";
     private static final String PARAM_GOOGLE_PLUS = "SocialNetworkManager.PARAM_GOOGLE_PLUS";
     private static final String PARAM_GOOGLE_PLUS_PERMISSIONS = "SocialNetworkManager.PARAM_GOOGLE_PLUS_PERMISSIONS";
 
@@ -53,12 +54,8 @@ public class SocialNetworkManager extends Fragment {
         final String paramLinkedInPermissions = args.getString(PARAM_LINKEDIN_PERMISSIONS);
 
         final boolean paramFacebook = args.getBoolean(PARAM_FACEBOOK, false);
-        final String paramFacebookApplicationId = args.getString(PARAM_FACEBOOK_APPLICATION_ID);
 
         final boolean paramGooglePlus = args.getBoolean(PARAM_GOOGLE_PLUS, false);
-
-        String scopes = args.getString(PARAM_GOOGLE_PLUS_PERMISSIONS);
-        final String[] paramGooglePlusPermissions = scopes.split(" ");
 
         if (!TextUtils.isEmpty(paramTwitterKey) || !TextUtils.isEmpty(paramTwitterKey)) {
             mSocialNetworksMap.put(TwitterSocialNetwork.ID,
@@ -71,10 +68,21 @@ public class SocialNetworkManager extends Fragment {
         }
 
         if (paramFacebook) {
-            mSocialNetworksMap.put(FacebookSocialNetwork.ID, new FacebookSocialNetwork(this, paramFacebookApplicationId));
+            final String paramFacebookApplicationId = args.getString(PARAM_FACEBOOK_APPLICATION_ID);
+
+            String scopes = args.getString(PARAM_FACEBOOK_PERMISSIONS);
+            List<String> paramFacebookPermissions = new ArrayList<String>();
+            for(String scope : scopes.split(" ")) {
+                paramFacebookPermissions.add(scope);
+            }
+
+            mSocialNetworksMap.put(FacebookSocialNetwork.ID, new FacebookSocialNetwork(this, paramFacebookApplicationId, paramFacebookPermissions));
         }
 
         if (paramGooglePlus) {
+            String scopes = args.getString(PARAM_GOOGLE_PLUS_PERMISSIONS);
+            final String[] paramGooglePlusPermissions = scopes.split(" ");
+
             mSocialNetworksMap.put(GooglePlusSocialNetwork.ID, new GooglePlusSocialNetwork(this, paramGooglePlusPermissions));
         }
 
@@ -223,6 +231,7 @@ public class SocialNetworkManager extends Fragment {
         private String linkedInConsumerKey, linkedInConsumerSecret, linkedInPermissions;
         private boolean facebook;
         private String facebookApplicationId;
+        private String[] facebookPermissions;
         private boolean googlePlus;
         private String[] googlePlusPermissions;
 
@@ -250,13 +259,14 @@ public class SocialNetworkManager extends Fragment {
         }
 
         // https://developers.facebook.com/docs/android/getting-started/
-        public Builder facebook() {
+        public Builder facebook(String[] permissions) {
             facebookApplicationId = Utility.getMetadataApplicationId(mContext);
             if (facebookApplicationId == null) {
                 throw new IllegalStateException("applicationID can't be null\n" +
                         "Please check https://developers.facebook.com/docs/android/getting-started/");
             }
 
+            facebookPermissions = permissions;
             facebook = true;
 
             return this;
@@ -286,6 +296,7 @@ public class SocialNetworkManager extends Fragment {
             if (facebook) {
                 args.putBoolean(PARAM_FACEBOOK, true);
                 args.putString(PARAM_FACEBOOK_APPLICATION_ID, facebookApplicationId);
+                args.putString(PARAM_FACEBOOK_PERMISSIONS, TextUtils.join(" ", Arrays.asList(facebookPermissions)));
             }
 
             if (googlePlus) {

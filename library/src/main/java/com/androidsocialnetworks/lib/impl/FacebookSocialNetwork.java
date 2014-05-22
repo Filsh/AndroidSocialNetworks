@@ -4,10 +4,8 @@ import android.content.Context;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
-import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
-import android.text.TextUtils;
 import android.util.Log;
 
 import com.androidsocialnetworks.lib.SocialNetwork;
@@ -32,13 +30,9 @@ import com.facebook.UiLifecycleHelper;
 import com.facebook.internal.SessionTracker;
 import com.facebook.internal.Utility;
 import com.facebook.model.GraphUser;
-import com.google.android.gms.auth.GoogleAuthException;
-import com.google.android.gms.auth.GoogleAuthUtil;
 
 import java.io.File;
-import java.io.IOException;
-import java.util.Arrays;
-import java.util.Collections;
+import java.util.List;
 
 /**
  * TODO: think about canceling requests
@@ -53,6 +47,7 @@ public class FacebookSocialNetwork extends SocialNetwork {
     private SessionTracker mSessionTracker;
     private UiLifecycleHelper mUILifecycleHelper;
     private String mApplicationId;
+    private List<String> mPermissions;
     private SessionState mSessionState;
     private String mPhotoPath;
     private String mStatus;
@@ -64,9 +59,10 @@ public class FacebookSocialNetwork extends SocialNetwork {
         }
     };
 
-    public FacebookSocialNetwork(Fragment fragment, String applicationId) {
+    public FacebookSocialNetwork(Fragment fragment, String applicationId, List<String> permissions) {
         super(fragment);
         mApplicationId = applicationId;
+        mPermissions = permissions;
     }
 
     @Override
@@ -106,7 +102,7 @@ public class FacebookSocialNetwork extends SocialNetwork {
             openRequest = new Session.OpenRequest(mSocialNetworkManager);
 
             openRequest.setDefaultAudience(SessionDefaultAudience.EVERYONE);
-            openRequest.setPermissions(Collections.<String>emptyList());
+            openRequest.setPermissions(mPermissions);
             openRequest.setLoginBehavior(SessionLoginBehavior.SSO_WITH_FALLBACK);
 
             currentSession.openForRead(openRequest);

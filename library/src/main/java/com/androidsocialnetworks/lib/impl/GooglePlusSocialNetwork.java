@@ -70,12 +70,16 @@ public class GooglePlusSocialNetwork extends SocialNetwork
         super.requestLogin(onLoginCompleteListener);
         mConnectRequested = true;
 
-        try {
-            mConnectionResult.startResolutionForResult(mSocialNetworkManager.getActivity(), REQUEST_AUTH);
-        } catch (Exception e) {
-            Log.e(TAG, "ERROR", e);
-            if (!mPlusClient.isConnecting()) {
-                mPlusClient.connect();
+        if(mConnectionResult == null && !mPlusClient.isConnecting()) {
+            mPlusClient.connect();
+        } else {
+            try {
+                mConnectionResult.startResolutionForResult(mSocialNetworkManager.getActivity(), REQUEST_AUTH);
+            } catch (Exception e) {
+                Log.e(TAG, "ERROR", e);
+                if (!mPlusClient.isConnecting()) {
+                    mPlusClient.connect();
+                }
             }
         }
     }
